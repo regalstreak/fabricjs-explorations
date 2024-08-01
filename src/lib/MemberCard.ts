@@ -97,7 +97,7 @@ export class MemberCard extends Group {
 		this.on('mousedown', (option) => {
 			if (this.canvas?.isDragging) return;
 
-			if (option.e.altKey) {
+			if (option.e.altKey || option.e.ctrlKey || option.e.metaKey) {
 				window.open(githubMember.html_url, '_blank');
 			}
 		});

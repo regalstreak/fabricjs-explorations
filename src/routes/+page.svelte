@@ -202,11 +202,14 @@
 <main>
 	<h1>Mozilla Organization Members</h1>
 	<p id="instructions">
+		Open profile: Alt/Cmd/Ctrl + Click
+		<br />
 		Pan: Hold Alt + Click and drag
 		<br />
 		Zoom: Scroll
 		<br />
-		Export: Cmd/Ctrl + S
+		Export: Alt/Cmd/Ctrl + S
+		<br />
 	</p>
 	<input type="text" placeholder="Search members" bind:value={searchTerm} />
 	<div id="canvasContainer">
