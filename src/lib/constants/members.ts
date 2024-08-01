@@ -1,4 +1,6 @@
-export const MEMBERS = [
+import type { GithubOrgMember } from '$lib/api';
+
+export const MEMBERS: GithubOrgMember[] = [
 	{
 		login: 'aerickson',
 		id: 47889,
@@ -599,4 +601,4 @@ export const MEMBERS = [
 		type: 'User',
 		site_admin: false
 	}
-];
+] as const;

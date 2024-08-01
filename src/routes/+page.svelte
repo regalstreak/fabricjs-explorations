@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Canvas, util } from 'fabric';
-	import type { GitHubMember } from '../types';
 	import { MemberCard } from '$lib/MemberCard';
 	import { MEMBERS } from '$lib/constants/members';
+	import { fetchGithubOrgMembers, type GithubOrgMember } from '$lib/api';
 
 	const GAP = 24;
 	let searchTerm = '';
-	let members: GitHubMember[] = [];
+	let members: GithubOrgMember[] = [];
 	let canvas: Canvas;
 	let isSidebarOpen = false;
 	let containerWidth: number;
@@ -30,14 +30,27 @@
 
 	onMount(async () => {
 		// Fetch members
-		const response = await fetch('https://api.github.com/orgs/mozilla/members?page=1');
-		if (response.ok) {
-			members = await response.json();
-		} else {
-			// hardcode as we're not gonna auth
-			members = MEMBERS;
-		}
+		members = await fetchGithubOrgMembers('mozilla');
 
+		// Initialize canvas
+		initialiseCanvas();
+
+		// Render initial member cards
+		renderMemberCards();
+
+		// Handle window resize
+		window.addEventListener('resize', handleResize);
+
+		// Export cards
+		window.addEventListener('keydown', (e: KeyboardEvent) => {
+			if ((e.key === 's' || e.key === 'ß') && (e.metaKey || e.ctrlKey || e.altKey)) {
+				e.preventDefault();
+				exportCards();
+			}
+		});
+	});
+
+	function initialiseCanvas() {
 		// Initialize canvas
 		const canvasContainer = document.getElementById('canvasContainer')!;
 		containerWidth = canvasContainer.clientWidth;
@@ -85,21 +98,7 @@
 			canvas.setViewportTransform(canvas.viewportTransform);
 			canvas.isDragging = false;
 		});
-
-		// Render initial member cards
-		renderMemberCards();
-
-		// Handle window resize
-		window.addEventListener('resize', handleResize);
-
-		// Export cards
-		window.addEventListener('keydown', (e: KeyboardEvent) => {
-			if ((e.key === 's' || e.key === 'ß') && (e.metaKey || e.ctrlKey || e.altKey)) {
-				e.preventDefault();
-				exportCards();
-			}
-		});
-	});
+	}
 
 	function handleResize() {
 		const canvasContainer = document.getElementById('canvasContainer')!;

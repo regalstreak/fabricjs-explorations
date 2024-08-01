@@ -10,4 +10,13 @@ declare global {
 	}
 }
 
+// Add Fabric.js type extensions
+declare module 'fabric' {
+	interface Canvas {
+		isDragging?: boolean;
+		lastPosX?: number;
+		lastPosY?: number;
+	}
+}
+
 export {};

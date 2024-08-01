@@ -7,7 +7,7 @@ import {
 	FabricObject,
 	Shadow
 } from 'fabric';
-import type { GitHubMember } from '../types';
+import type { GithubOrgMember } from './api';
 
 function sanitizeUrl(url: string): string {
 	return url.replace(/^(https?:\/\/)?(www\.)?/, '');
@@ -25,11 +25,11 @@ const roundedCorners = (fabricObject: FabricObject, cornerRadius: number) => {
 };
 
 export class MemberCard extends Group {
-	githubMember: GitHubMember;
+	githubMember: GithubOrgMember;
 	private avatarPlaceholder: Rect;
 	private avatarImage: FabricImage | null = null;
 
-	constructor(githubMember: GitHubMember, options: Partial<GroupProps>) {
+	constructor(githubMember: GithubOrgMember, options: Partial<GroupProps>) {
 		const { width = 200, height = 100 } = options;
 
 		const rect = new Rect({
