@@ -5,10 +5,28 @@
 	import { MemberCard } from '$lib/MemberCard';
 	import { MEMBERS } from '$lib/constants/members';
 
+	const GAP = 24;
 	let searchTerm = '';
 	let members: GitHubMember[] = [];
 	let canvas: Canvas;
 	let isSidebarOpen = false;
+	let containerWidth: number;
+	let containerHeight: number;
+
+	$: columns = getColumnCount(containerWidth);
+	$: cardWidth = getCardWidth(containerWidth, columns);
+	$: cardHeight = cardWidth * 0.3;
+
+	function getColumnCount(width: number): number {
+		if (width >= 1200) return 4; // Laptop
+		if (width >= 992) return 3; // Medium
+		if (width >= 768) return 2; // Tablet
+		return 1; // Mobile
+	}
+
+	function getCardWidth(width: number, cols: number): number {
+		return (width - (cols + 1) * GAP) / cols;
+	}
 
 	onMount(async () => {
 		// Fetch members
@@ -16,13 +34,18 @@
 		if (response.ok) {
 			members = await response.json();
 		} else {
+			// hardcode as we're not gonna auth
 			members = MEMBERS;
 		}
 
 		// Initialize canvas
+		const canvasContainer = document.getElementById('canvasContainer')!;
+		containerWidth = canvasContainer.clientWidth;
+		containerHeight = window.innerHeight - 150; // Adjust as needed
+
 		canvas = new Canvas('memberCanvas', {
-			width: window.innerWidth,
-			height: window.innerHeight - 100
+			width: containerWidth,
+			height: containerHeight
 		});
 
 		// Implement pan and zoom
@@ -66,6 +89,9 @@
 		// Render initial member cards
 		renderMemberCards();
 
+		// Handle window resize
+		window.addEventListener('resize', handleResize);
+
 		// Export cards
 		window.addEventListener('keydown', (e: KeyboardEvent) => {
 			if ((e.key === 's' || e.key === 'ß') && (e.metaKey || e.ctrlKey || e.altKey)) {
@@ -75,19 +101,34 @@
 		});
 	});
 
+	function handleResize() {
+		const canvasContainer = document.getElementById('canvasContainer')!;
+		containerWidth = canvasContainer.clientWidth;
+		containerHeight = window.innerHeight - 150; // Adjust as needed
+
+		canvas.setDimensions({ width: containerWidth, height: containerHeight });
+		renderMemberCards();
+	}
+
 	function renderMemberCards() {
 		if (!canvas) {
 			return;
 		}
 		canvas.clear();
+
 		const filteredMembers = members.filter((member) =>
 			member.login.toLowerCase().includes(searchTerm.toLowerCase())
 		);
 
 		filteredMembers.forEach((member, index) => {
+			const col = index % columns;
+			const row = Math.floor(index / columns);
+
 			const card = new MemberCard(member, {
-				left: 10 + (index % 5) * 220,
-				top: 10 + Math.floor(index / 5) * 120,
+				left: GAP + col * (cardWidth + GAP),
+				top: GAP + row * (cardHeight + GAP),
+				width: cardWidth,
+				height: cardHeight,
 				opacity: 0
 			});
 			canvas.add(card);
@@ -109,9 +150,10 @@
 		sidebar.style.right = '0';
 		sidebar.style.top = '0';
 		sidebar.style.bottom = '0';
-		sidebar.style.width = '200px';
-		sidebar.style.backgroundColor = '#f0f0f0';
+		sidebar.style.width = '300px';
+		sidebar.style.backgroundColor = '#070510';
 		sidebar.style.overflowY = 'auto';
+		sidebar.style.padding = '24px';
 		return sidebar;
 	}
 
@@ -147,6 +189,9 @@
 
 	$: {
 		searchTerm;
+		columns;
+		cardWidth;
+		cardHeight;
 		renderMemberCards();
 	}
 </script>
@@ -157,33 +202,82 @@
 
 <main>
 	<h1>Mozilla Organization Members</h1>
-	<div>{searchTerm}</div>
-	<input type="text" placeholder="Search members..." bind:value={searchTerm} />
-	<canvas id="memberCanvas"></canvas>
+	<p id="instructions">
+		Pan: Hold Alt + Click and drag
+		<br />
+		Zoom: Scroll
+		<br />
+		Export: Cmd/Ctrl + S
+	</p>
+	<input type="text" placeholder="Search members" bind:value={searchTerm} />
+	<div id="canvasContainer">
+		<canvas id="memberCanvas"></canvas>
+	</div>
 </main>
 
 <style>
+	:global(body) {
+		background-color: #070510;
+		color: #f8fafc;
+		margin-top: 48px;
+		font-family:
+			system-ui,
+			-apple-system,
+			BlinkMacSystemFont,
+			'Segoe UI',
+			Roboto,
+			Oxygen,
+			Ubuntu,
+			Cantarell,
+			'Open Sans',
+			'Helvetica Neue',
+			sans-serif;
+	}
+
 	main {
 		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
+		padding: 0;
+		margin: 0;
+		max-width: 100%;
 	}
 
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
+	#canvasContainer {
+		width: 100%;
+		height: calc(100vh - 150px);
+		overflow: hidden;
 	}
 
-	@media (min-width: 640px) {
+	#instructions {
+		position: absolute;
+		left: 24px;
+		top: 24px;
+		text-align: left;
+		font-size: 12px;
+		color: gray;
+	}
+
+	input {
+		outline: 0;
+		padding: 8px;
+		border: 1px solid #1e293b;
+		border-radius: 4px;
+		background-color: #070510;
+		color: #f8fafc;
+		width: 300px;
+		max-width: 100%;
+	}
+
+	@media (max-width: 767px) {
 		main {
-			max-width: none;
+			padding: 0 16px;
 		}
-	}
 
-	canvas {
-		border: 1px solid #ccc;
+		#canvasContainer {
+			height: calc(100vh - 200px);
+		}
+
+		#instructions {
+			display: none;
+		}
 	}
 </style>
